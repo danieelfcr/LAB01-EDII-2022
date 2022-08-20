@@ -16,5 +16,10 @@ namespace LAB01_EDII
         {
             InitializeComponent();
         }
+
+        private void tPInsertar_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
