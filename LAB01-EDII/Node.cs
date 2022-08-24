@@ -6,7 +6,15 @@ using System.Threading.Tasks;
 
 namespace LAB01_EDII
 {
-    class Class1
+    public class Node<T>
     {
+        public T Record { get; set; }
+        public Node<T> Left;
+        public Node<T> Right;
+
+        public Node(T Record)
+        {
+            this.Record = Record;
+        }
     }
 }

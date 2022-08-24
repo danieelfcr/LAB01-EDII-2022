@@ -145,6 +145,7 @@ namespace LAB01_EDII
             this.btnInsertar.TabIndex = 5;
             this.btnInsertar.Text = "Insertar CSV";
             this.btnInsertar.UseVisualStyleBackColor = true;
+            this.btnInsertar.Click += new System.EventHandler(this.btnInsertar_Click);
             // 
             // tPActualizar
             // 
