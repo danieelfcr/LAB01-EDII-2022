@@ -33,8 +33,12 @@ namespace LAB01_EDII
             return person.name.ToLower().CompareTo(newPerson.name.ToLower());
         };  //Compares two patient nodes by their Name
 
+        public static Action<Person, Person> EditData = (person, newPerson) =>
+        {
+            person.datebirth = newPerson.datebirth;
+            person.address = newPerson.address;
+        };
 
-        public AVL<Person> DPITree = new AVL<Person>(DPIcomparer);
-        public AVL<Person> NameTree = new AVL<Person>(NameComparer);
+        public AVL<Person> DPITree = new AVL<Person>(DPIcomparer, NameComparer, EditData);
     }
 }

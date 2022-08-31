@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace LAB01_EDII
 {
-    public class Node<T>
+    public class Node<Person>
     {
-        public T Record { get; set; }
-        public Node<T> Left;
-        public Node<T> Right;
+        public Person Record { get; set; }
+        public Node<Person> Left;
+        public Node<Person> Right;
 
-        public Node(T Record)
+        public Node(Person Record)
         {
             this.Record = Record;
         }

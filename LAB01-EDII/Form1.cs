@@ -26,9 +26,7 @@ namespace LAB01_EDII
 
         private void btnInsertar_Click(object sender, EventArgs e)
         {
-            string InsertData = "";
-            string DeleteData = "";
-            string PatchData = "";
+            string [] Data = new string [2];
 
             //Open File Dialog
             openFileDialog1.Filter = "csv files (*.csv)|*.csv|All files (*.*)|*.*";
@@ -37,100 +35,134 @@ namespace LAB01_EDII
             {
                 var file = openFileDialog1.FileName;
 
-                GetData(file, ref InsertData, ref DeleteData, ref PatchData);
-                File.WriteAllText("InsertData.json", InsertData);
-                File.WriteAllText("PatchData.json", PatchData);
-                File.WriteAllText("DeleteData.json", DeleteData);
-
-                ConvertJSONtoCS();
+                GetData(file, Data);
+                MessageBox.Show("Se ha agregado la información el archivo CSV correctamente en la estructura de datos.");
             }
             else
             {
                 MessageBox.Show("No se ha podido abrir el archivo correctamente");
             }
         }
-
-        //Converts a CSV to JSON
-        public string CSVtoJSON(string file)
-        {
-            var csv = new List<string[]>();
-            var lines = File.ReadAllLines(file);
-
-            foreach (string line in lines)
-                csv.Add(line.Split(','));
-
-            var properties = lines[0].Split(',');
-
-            var listObjResult = new List<Dictionary<string, string>>();
-
-            for (int i = 1; i < lines.Length; i++)
-            {
-                var objResult = new Dictionary<string, string>();
-                for (int j = 0; j < properties.Length; j++)
-                    objResult.Add(properties[j], csv[i][j]);
-
-                listObjResult.Add(objResult);
-            }
-
-            return JsonConvert.SerializeObject(listObjResult);
-        }
         
-        public void GetData(string file, ref string InsertData, ref string PatchData, ref string DeleteData)
+        public void GetData(string file, string [] data)
         {
-
+            //Reads data in each line and make the needed operation in the tree
             foreach (string line in File.ReadLines(file))
             {
-                if (line.Contains("INSERT"))
+                data = line.Split(';');
+                
+                if (data[0].Contains("INSERT"))
                 {
-                    string temp = line.Remove(0, 7); //Remove INSERT;"
-                    InsertData += (temp + "\n");
+                    InsertJSON(data[1]);
                 }
-                else if (line.Contains("PATCH"))
+                else if (data[0].Contains("PATCH"))
                 {
-                    string temp = line.Remove(0, 6); //Remove PATCH;"
-                    PatchData += temp;
+                    PatchJSON(data[1]);
                 }
                 else
                 {
-                    string temp = line.Remove(0, 7); //Remove DELETE;"
-                    DeleteData += temp;
+                    DeleteJSON(data[1]);
                 }
 
             }
         }
 
-        public static void ConvertJSONtoCS()
+        //Deserialize object in JSON format to a CS object format
+        public static void InsertJSON(string personJSON)
         {
-            string PathInsert = @"C:\Users\danie\OneDrive - Universidad Rafael Landivar\Escritorio\Universidad\Ciclo IV\Estructura de Datos II\Práctica\LAB 01\LAB01-EDII-2022\LAB01-EDII\bin\Debug\InsertData.json";
-
-            if (System.IO.File.Exists(PathInsert))
-            {
-                foreach (string line in File.ReadLines(PathInsert))
-                {
-                    Person person = Newtonsoft.Json.JsonConvert.DeserializeObject<Person>(line);
-                    InsertToTree(person);
-                    
-                }
-            }
-
-
+            Person person = Newtonsoft.Json.JsonConvert.DeserializeObject<Person>(personJSON);
+            InsertData(person);
         }
 
-        public static void InsertToTree(Person person)
+        public static void PatchJSON(string personJSON)
+        {
+            Person person = Newtonsoft.Json.JsonConvert.DeserializeObject<Person>(personJSON);
+            EditData(person);
+        }
+
+        public static void DeleteJSON(string personJSON)
+        {
+            Person person = Newtonsoft.Json.JsonConvert.DeserializeObject<Person>(personJSON);
+            DeleteData(person);
+        }
+
+        //Inserts a person to tree
+        public static void InsertData(Person person)
         {
             Node<Person> NewNodeDPI = new Node<Person>(person);
-            Node<Person> NewNodeName = new Node<Person>(person);
 
             if (!Data.Instance.DPITree.Contains(Data.Instance.DPITree.Root, NewNodeDPI))
             {
                 Data.Instance.DPITree.Root = Data.Instance.DPITree.Insert(Data.Instance.DPITree.Root, NewNodeDPI);
-                Data.Instance.NameTree.Root = Data.Instance.NameTree.Insert(Data.Instance.NameTree.Root, NewNodeName);
 
             }
             else
             {
                 MessageBox.Show("Una persona ingresada tiene el mismo DPI que otra persona. Por favor, corrige el error.");
             }
+        }
+
+        //Edits a person's info in the tree
+        public static void EditData(Person person)
+        {
+            //Creates a new node to search in the DPI tree, using DPI as the ID.
+            Person auxPerson = new Person
+            {
+                name = person.name,
+                dpi = person.dpi,
+                datebirth = person.datebirth,
+                address = person.address
+            };
+            
+            Node<Person> PatchNodeDPI = new Node<Person>(auxPerson);
+
+            Data.Instance.DPITree.EditData(Data.Instance.DPITree.Root, PatchNodeDPI);
+
+        }
+
+        //Deletes a person in the tree
+        public static void DeleteData(Person person)
+        {
+            Person auxPerson = new Person
+            {
+                name = person.name,
+                dpi = person.dpi,
+            };
+            Node<Person> DeleteNodeDPI = new Node<Person>(auxPerson);
+
+            Data.Instance.DPITree.Delete(Data.Instance.DPITree.Root, DeleteNodeDPI);
+
+        }
+
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+            string searchname = tBName.Text;
+
+            //Create a new object with the name
+            Person sperson = new Person
+            {
+                name = searchname
+            };
+            
+            Node<Person> node = new Node<Person>(sperson);
+       
+            Data.Instance.DPITree.SearchInOrder(Data.Instance.DPITree.Root, node);
+            ExportData();
+        }
+
+        public static void ExportData()
+        {
+            string jsonInfo = "";
+            foreach (var item in Data.Instance.DPITree.NodeList)
+            {
+                var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(item);
+                jsonInfo += jsonString;
+            }
+
+            File.Delete("SearchResults.json");     
+                System.IO.File.WriteAllText("SearchResults.json", jsonInfo);
+            
+            
         }
     }
 }

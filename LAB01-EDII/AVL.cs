@@ -7,36 +7,40 @@ using System.Threading.Tasks;
 
 namespace LAB01_EDII
 {
-    public class AVL<T>
+    public class AVL<Person>
     {
-        public Node<T> Root;
+        public Node<Person> Root;
         public int count;
-        public List<T> NodeList;
-        Func<T, T, int> Comparer;
-        Action<T, T> EditInformation;
+        public List<Person> NodeList;
+        Func<Person, Person, int> Comparer;
+        Func<Person, Person, int> NameComparer;
+        Action<Person, Person> EditInformation;
 
 
-        public AVL(Func<T, T, int> Comparer)
+        public AVL(Func<Person, Person, int> Comparer)
         {
             Root = null;
             count = 0;
-            NodeList = new List<T>();
+            NodeList = new List<Person>();
             this.Comparer = Comparer;
 
         }
 
-        public AVL(Func<T, T, int> Comparer, Action<T, T> EditInformation)
+
+
+        public AVL(Func<Person, Person, int> Comparer, Func<Person, Person, int> NameComparer, Action<Person, Person> EditInformation)
         {
             Root = null;
             count = 0;
-            NodeList = new List<T>();
+            NodeList = new List<Person>();
             this.Comparer = Comparer;
+            this.NameComparer = NameComparer;
             this.EditInformation = EditInformation;
         }
 
 
 
-        public Node<T> Insert(Node<T> root, Node<T> newNode)
+        public Node<Person> Insert(Node<Person> root, Node<Person> newNode)
         {
             //Base case
             if (root == null)
@@ -80,7 +84,7 @@ namespace LAB01_EDII
             return root;
         }
 
-        public int GetHeight(Node<T> node)
+        public int GetHeight(Node<Person> node)
         {
             if (node == null)
                 return -1;
@@ -93,7 +97,7 @@ namespace LAB01_EDII
             return (leftHeight > rightHeight) ? leftHeight + 1 : rightHeight + 1;
         }
 
-        public int CalculateBalanceFactor(Node<T> node)
+        public int CalculateBalanceFactor(Node<Person> node)
         {
             if (node == null)
                 return -1;
@@ -101,36 +105,52 @@ namespace LAB01_EDII
         }
 
 
-        public Node<T> RightRotation(Node<T> node)
+        public Node<Person> RightRotation(Node<Person> node)
         {
-            Node<T> newRoot = node.Left;
-            Node<T> rightAux = newRoot.Right;
+            Node<Person> newRoot = node.Left;
+            Node<Person> rightAux = newRoot.Right;
             newRoot.Right = node;
             node.Left = rightAux;
 
             return newRoot;
         }
 
-        public Node<T> LeftRotation(Node<T> node)
+        public Node<Person> LeftRotation(Node<Person> node)
         {
-            Node<T> newRoot = node.Right;
-            Node<T> leftAux = newRoot.Left;
+            Node<Person> newRoot = node.Right;
+            Node<Person> leftAux = newRoot.Left;
             newRoot.Left = node;
             node.Right = leftAux;
 
             return newRoot;
         }
 
-        public void InOrder(Node<T> root)
+       /* public void InOrder(Node<T> root)
         {
             if (root == null) return;
 
             InOrder(root.Left);
             NodeList.Add(root.Record);
             InOrder(root.Right);
+        }*/
+
+        public void SearchInOrder(Node<Person> root, Node<Person> node)
+        {
+            if (root == null) return;
+
+            SearchInOrder(root.Left, node);
+           
+            Person persona1 = root.Record;
+            Person persona2 = node.Record;
+
+            if (NameComparer(root.Record, node.Record) == 0)
+            {
+                NodeList.Add(root.Record);
+            }           
+            SearchInOrder(root.Right, node);
         }
 
-        public Node<T> Search(Node<T> root, Node<T> Data)
+        /*public Node<T> Search(Node<T> root, Node<T> Data)
         {
             if (root != null)
             {
@@ -150,9 +170,9 @@ namespace LAB01_EDII
                 }
             }
             return Data;
-        }
+        }*/
 
-        public bool Contains(Node<T> root, Node<T> newNode)
+        public bool Contains(Node<Person> root, Node<Person> newNode)
         {
             if (root != null)
             {
@@ -174,7 +194,7 @@ namespace LAB01_EDII
             return false;
         }
 
-        public void EditData(Node<T> root, Node<T> nodeToEdit)
+        public void EditData(Node<Person> root, Node<Person> nodeToEdit)
         {
             if (root != null)
             {
@@ -193,6 +213,96 @@ namespace LAB01_EDII
                     EditData(root.Right, nodeToEdit);
                 }
             }
+        }
+
+        public Node<Person> Delete(Node<Person> root, Node<Person> DeleteNode)
+        {
+            if (root == null)
+                return root;
+
+            if (Comparer(root.Record, DeleteNode.Record) == 1)
+            {
+                root.Left = Delete(root.Left, DeleteNode);
+            }
+
+            else if (Comparer(root.Record, DeleteNode.Record) == -1)
+            {
+                root.Right = Delete(root.Right, DeleteNode);
+            }
+
+            else
+            {
+                if (root.Left == null || root.Right == null)
+                {
+                    Node<Person> aux = (root.Left != null) ? root.Left : root.Right;
+
+                    if (aux == null)
+                    {
+                        aux = root;
+                        root = null;
+                    }
+                    else
+                    {
+                        root = aux;
+                        aux = null;
+
+                    }
+                }
+                else
+                {
+                    Node<Person> aux = minValueNode(root.Right);
+                    root.Record = aux.Record;
+                    root.Right = Delete(root.Right, DeleteNode);
+                }
+
+
+            }
+
+
+            return root;
+
+            int balance = CalculateBalanceFactor(root);
+
+            if (balance > 1)
+            {
+                if (Comparer(root.Record, DeleteNode.Record) == 1)
+                {
+                    //single right rotation
+                    return RightRotation(root);
+                }
+                else if (Comparer(root.Record, DeleteNode.Record) == -1)
+                {
+                    //double roght rotation
+                    root.Left = LeftRotation(root.Left);
+                    return RightRotation(root);
+                }
+            }
+
+            if (balance < -1)
+            {
+                if (Comparer(root.Record, DeleteNode.Record) == -1)
+                {
+                    //single left rotation
+                    return LeftRotation(root);
+                }
+                else if (Comparer(root.Record, DeleteNode.Record) == 1)
+                {
+                    //double left rotation
+                    root.Right = RightRotation(root.Right);
+                    return LeftRotation(root);
+                }
+            }
+
+        }
+
+        Node<Person> minValueNode(Node<Person> node)
+        {
+            Node<Person> aux = node;
+            if (node.Left != null)
+            {
+                aux = aux.Left;
+            }
+            return aux;
         }
 
     }
